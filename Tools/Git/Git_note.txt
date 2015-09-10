@@ -1,0 +1,213 @@
+教程地址:  http://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000
+
+安装方式:
+1:yum安装
+yum install git
+
+git配置文件:
+/etc/gitconfig : 系统中对所有用户都普遍适用的配置。使用 git config 时用 --system 选项，读写的就是这个文件(优先级最低)
+~/.gitconfig : 用户目录下的配置文件只适用于该用户。使用 git config 时用 --global 选项，读写的就是这个文件(优先级其次)
+[work_dir]/.git/config : 这配置仅仅针对当前项目有效(优先级最高)
+每一个级别的配置都会覆盖上层的相同配置，所以 .git/config 里的配置会覆盖 /etc/gitconfig 中的同名变量
+
+配置项说明:
+git config --global user.name "Author_Name"				#配置作者名
+git config --global user.email "Author_Email@xxx.xxx"		#配置邮箱地址
+git config --global color.ui true						#交互视图颜色突出显示
+git config --global core.editor emacs					#设置Git默认使用的文本编辑器
+git config --global merge.tool vimdiff					#设置差异分析工具(Git支持kdiff3，tkdiff，meld，xxdiff，emerge，vimdiff，gvimdiff，ecmerge，opendiff 等合并工具的输出信息)
+git config --global alias.st status						#配置别名
+git config --global alias.co checkout					#配置别名
+git config --global alias.ci commit						#配置别名
+git config --global alias.br branch						#配置别名
+git config --global alias.unstage 'reset HEAD'			#配置别名
+
+忽略特殊文件:
+在Git工作区的根目录下创建一个特殊的.gitignore文件，其相关忽略文件可通过以下网址查询 https://github.com/github/gitignore
+或通过Github创建仓库时，通过下拉式选项选择创建
+
+本地项目初始化的途径:
+1:自建文件夹
+git init						#初始化当前工作目录
+git init [directory]			#初始化指定工作目录
+2:克隆远端仓库
+git clone [url]					#克隆远端仓库到本地当前目录，并使用仓库名作为项目名
+git clone [url] [directory]		#克隆远端仓库到本地当前目录，并使用指定路径及文件名作为项目名
+
+工作区/暂存区/版本库 说明:
+工作区:就是你在电脑里能看到的目录
+暂存区:英文叫stage, 或index。一般存放在"git目录"下的index文件( .git/index )中，所以我们把暂存区有时也叫作索引( index )
+版本库:工作区有一个隐藏目录.git，这个不算工作区，而是Git的版本库
+目录结构如下:
+workspace					#工作区
+    \-.git					#版本库
+        \-index				#暂存区
+        \-objects			#Git的对象库
+
+分支应用场景:
+1:软件开发中，bug就像家常便饭一样。有了bug就需要修复，在Git中，由于分支是如此的强大，所以，每个bug都可以通过一个新的临时分支来修复，修复后，合并分支，然后将临时分支删除
+2:添加一个新功能时，你肯定不希望因为一些实验性质的代码，把主分支搞乱了，所以，每添加一个新功能，最好新建一个feature分支，在上面开发，完成后，合并，最后，删除该feature分支
+PS:HEAD是一个指向当前版本的指针，用HEAD表示当前版本，上一个版本就是HEAD^，上上一个版本就是HEAD^^，当然往上100个版本写100个^比较容易数不过来，所以写成HEAD~100
+
+reset与revert的区别
+git revert是用一次新的commit来回滚之前的commit，git reset是直接删除指定的commit。
+在回滚这一操作上看，效果差不多。但是在日后继续merge以前的老版本时有区别。因为git revert是用一次逆向的commit“中和”之前的提交，因此日后合并老的branch时，导致这部分改变不会再次出现，但是git reset是之间把某些commit在某个branch上删除，因而和老的branch再次merge时，这些被回滚的commit应该还会被引入。
+git reset 是把HEAD向后移动了一下，而git revert是HEAD继续前进，只是新的commit的内容和要revert的内容正好相反，能够抵消要被revert的内容。
+git revert用于用一个commit来记录并回滚早前的commit，经常是一些错误的提交。如果你想干脆扔掉working tree中的东西，可以使用git reset --hard
+例如
+A) git revert HEAD~3：丢弃最近的三个commit，把状态恢复到最近的第四个commit，并且提交一个新的commit来记录这次改变。
+B) git revert -n master~5..master~2：丢弃从最近的第五个commit（包含）到第二个（不包含）,但是不自动生成commit，这个revert仅仅修改working tree和index
+
+多人协作的工作模式：
+1:首先，可以试图用git push origin branch-name推送自己的修改
+2:如果推送失败，则因为远程分支比你的本地更新，需要先用git pull试图合并
+3:如果合并有冲突，则解决冲突，并在本地提交
+4:没有冲突或者解决掉冲突后，再用git push origin branch-name推送就能成功
+
+常用命令详解:
+git add					#将文件追加到暂存区
+git add .				#将当前目录下所有文件添加到缓存(忽略 .gitignore 文件中指定文件)
+-------------------------------------------------------------------------------------------------------------
+git status				#用于查看项目的当前状态
+git status -s			#用于查看项目的当前状态(简洁输出)
+-------------------------------------------------------------------------------------------------------------
+git diff										#用与比较工作区与暂存区之间，暂存区与版本库之间，工作区与版本库之间，版本库不同快照之间的差异
+git diff [<path>...]							#在每次 add 进入 index 前会运行这个命令，查看即将 add 进入 index 时所做的内容修改，即工作区与暂存区之间的差异
+git diff --cached [<path>...]					#它表示查看已经 add 进入 index 但是尚未 commit 的内容同最后一次 commit 时的内容的差异。即暂存区与版本库之间的差异
+git diff --cached [<commit>] [<path>...]		#它表示查看已经 add 进入 index 但是尚未 commit 的内容同指定的 commit 之间的差异，即暂存区与指定版本库之间的差异
+git diff <commit> [<path>...]					#这个命令用来查看工作目录和指定 commit 的 commit 之间的差别，如果要和Git directory中最新版比较差别，则 <commit>=HEAD 如果要和某一个 branch 比较差别，<commit>=分支名字
+git diff <commit> <commit> [<path>...]			#这个命令用来比较版本库中任意两个 commit 之间的差别，如果想比较任意一个<commit>和最新版本库的差别，把其中一个<commit>换成HEAD即可
+-------------------------------------------------------------------------------------------------------------
+git commit -m "版本提交说明"		#填写说明内容，提交快照
+git commit -a						#忽略说明内容填写(不建议)
+-------------------------------------------------------------------------------------------------------------
+git rm <file>				#将文件从缓存区&工作区中移除
+git rm --cached <file>		#文件从缓存区中移除但保留工作区中文件
+-------------------------------------------------------------------------------------------------------------
+git checkout -- <file>		#(固定模式)还原已修改但未添加至缓存区的文件( -- 参数非常重要不可忽略，否者就实现切换分支功能)
+git reset HEAD <file>		#(固定模式)还原已修改且已添加至缓存区的文件，将其去标记，归纳至已修改但未添加至缓存区状态
+-------------------------------------------------------------------------------------------------------------
+git mv <file>				#重命名文件名。所做的事情就是 git rm --cached 重命名磁盘上的文件，然后再执行 git add 把新文件添加到缓存区
+-------------------------------------------------------------------------------------------------------------
+git reset [--hard|soft|mixed|merge|keep] [<commit>或HEAD]		#将当前的分支重设（reset）到指定的<commit>或者HEAD（默认，如果不显示指定commit，默认是HEAD，即最新的一次提交），并且根据[mode]有可能覆盖工作区和暂存区
+	--hard：重设（reset） index和working directory，自从<commit>以来在working directory中的任何改变都被丢弃，并把HEAD指向<commit>
+	--soft：index和working directory中的内容不作任何改变，仅仅把HEAD指向<commit>。这个模式的效果是，执行完毕后，自从<commit>以来的所有改变都会显示在git status的"Changes to be committed"中
+	--mixed：仅reset index，但是不reset working directory。这个模式是默认模式，即当不显示告知git reset模式时，会使用mixed模式。这个模式的效果是，working directory中文件的修改都会被保留，不会丢弃，但是也不会被标记成"Changes to be committed"，但是会打出什么还未被更新的报告
+	--merge 和 --keep用的不多
+git reset HEAD^					#回退所有内容到上一个版本
+git reset HEAD^ a.py			#回退a.py这个文件的版本到上一个版本
+git reset --soft HEAD~3			#向前回退到第3个版本
+git reset --hard origin/master	#将本地的状态回退到和远程的一样
+git reset 057d					#回退到某个版本
+-------------------------------------------------------------------------------------------------------------
+git revert							#撤销某次操作，此次操作之前的commit都会被保留
+git revert HEAD~3					#丢弃最近的三个commit，把状态恢复到最近的第四个commit，并且提交一个新的commit来记录这次改变
+git revert -n master~5..master~2	#丢弃从最近的第五个commit（包含）到第二个（不包含）,但是不自动生成commit，这个revert仅仅修改working tree和index
+git revert HEAD						#回退到上一次提交的状态，按照某一次的commit完全反向的进行一次commit
+-------------------------------------------------------------------------------------------------------------
+git branch						#罗列分支列表
+git branch <branchname>			#创建分支
+git branch -d <branchname>		#删除分支
+git branch -D <branchname>		#强制删除分支
+-------------------------------------------------------------------------------------------------------------
+git checkout <branchname>		#切换分支
+git checkout -b <branchname>	#创建并切换到新分支
+-------------------------------------------------------------------------------------------------------------
+git merge (branchname)			#将指定分支合并到当前分支
+-------------------------------------------------------------------------------------------------------------
+git stash						#将此刻工作区状态，暂存下来，待后续恢复调用
+git stash list					#查看后台暂存列表
+git stash apply <stashname>		#依据暂存名恢复暂存
+git stash drop <stashname>		#依据暂存名删除暂存
+git stash pop <stashname>		#依据暂存名恢复暂存同时删除暂存后台文件
+-------------------------------------------------------------------------------------------------------------
+git log											#查询历史版本记录
+git log --pretty=oneline						#查询历史版本记录(简洁模式)
+git log --pretty=oneline --graph				#查询历史版本记录(简洁模式 & 分支合并)
+git log --reverse --pretty=oneline				#查询历史版本记录(简洁模式 & 逆向显示)
+git log --author=Linus --pretty=oneline -5		#查询历史版本记录(简洁模式 & 按作者名查找 & 显示5行)
+git log --pretty=oneline --before={3.weeks.ago} --after={2010-04-18} --no-merges			#查询历史修改记录(简洁模式 & 3周前 & 20100418以后 & 隐藏合并信息)
+-------------------------------------------------------------------------------------------------------------
+git reflog			#查询历史修改记录(可查询到操作过的历史版本号)
+-------------------------------------------------------------------------------------------------------------
+git tag <tagname>				#创建一个不带注解的标签
+git tag <tagname> <commit>		#为已递交的快照，追加标签
+git tag							#查看所有标签
+git tag -a <tagname> -m "w3cschool.cc标签"		#创建标签并指定标签注释
+git tag -s <tagname> -m "想要远程他.cc标签"		#PGP签名标签
+git tag -d <tagname> 			#删除标签(标签是保留在本地的，想要同步远程标签，需要推送到远程)
+git push origin --tags			#推送本地所有标签到远程
+如果标签已经推送到远程，要删除远程标签就麻烦一点，先从本地删除：
+git tag -d v0.9
+Deleted tag 'v0.9' (was 6224937)
+然后，从远程删除。删除命令也是push，但是格式如下：
+git push origin :refs/tags/v0.9
+To git@github.com:michaelliao/learngit.git
+ - [deleted]         v0.9
+-------------------------------------------------------------------------------------------------------------
+git show <tagname>				#查看标签信息
+-------------------------------------------------------------------------------------------------------------
+					                          远程同步教程
+-------------------------------------------------------------------------------------------------------------
+git remote add [shortname] [url]			#添加一个新的远程仓库并指定一个名字
+配置SSH-Key
+ssh-keygen -t rsa -C "youremail@example.com"			#生成密钥
+***后面的your_email@youremail.com改为你在github上注册的邮箱，之后会要求确认路径和输入密码，我们这使用默认的一路回车就行。成功的话会在~/下生成.ssh文件夹，进去，打开id_rsa.pub，复制里面的key***
+***回到github上，进入 Account Settings（账户配置），左边选择SSH Keys，Add SSH Key,title随便填，粘贴在你电脑上生成的key***
+ssh -T git@github.com					#验证联通性
+Hi XXXXX! You've successfully authenticated, but GitHub does not provide shell access.
+(内容推送)
+
+git remote add origin git@github.com:tianqixin/w3cschool.cc.git
+
+git push -u origin master	#首次推送需要 -u 参数
+
+git remote	#查看当前的远程库
+git remote -v	#查看当前的远程库(详细信息)
+
+git fetch	#从远程仓库下载新分支与数据，手动合并(git merge)
+git pull	#从远程仓库下载新分支与数据，并自动合并
+
+git push [alias] [branch]	#推送你的新分支与数据到某个远端仓库命令
+
+git remote rm [别名]	#删除远程仓库
+-------------------------------------------------------------------------------------------------------------
+					                          服务器安装教程
+-------------------------------------------------------------------------------------------------------------
+yum install git	#安装git
+
+groupadd git ; adduser git -g git		#创建git组和用户
+
+收集所有需要登录的用户的公钥，公钥位于id_rsa.pub文件中，把我们的公钥导入到/home/git/.ssh/authorized_keys文件里，一行一个。
+cd /home/git/
+mkdir .ssh
+chmod 700 .ssh
+touch .ssh/authorized_keys
+chmod 600 .ssh/authorized_keys
+
+初始化Git仓库
+$ cd /home
+$ mkdir gitrepo
+$ chown git:git gitrepo/
+$ cd gitrepo
+$ git init --bare w3cschoolcc.git		#创建一个裸仓库(即只可共享的目录，没有工作区)
+Initialized empty Git repository in /home/gitrepo/w3cschoolcc.git/
+
+创建一个空仓库，与服务器上的Git仓库同名并.git结尾。然后，把仓库所属用户改为git
+chown -R git:git w3cschoolcc.git
+
+克隆仓库(客户端克隆本地仓库)
+$ git clone git@192.168.45.4:/home/gitrepo/w3cschoolcc.git
+Cloning into 'w3cschoolcc'...
+warning: You appear to have cloned an empty repository.
+Checking connectivity... done.
+
+这样我们的 Git 服务器安装就完成了，接下来我们可以禁用 git 用户通过shell登录，可以通过编辑/etc/passwd文件完成。找到类似下面的一行:
+git:x:503:503::/home/git:/bin/bash
+改为:
+git:x:503:503::/home/git:/sbin/nologin
+************************************************************
+搭建Git服务器非常简单，通常10分钟即可完成；
+要方便管理公钥，用Gitosis	(百人以上规模)
+要像SVN那样变态地控制权限，用Gitolite	(权限控制)
+************************************************************
